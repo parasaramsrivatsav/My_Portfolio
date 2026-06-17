@@ -1,366 +1,294 @@
 // ============================================
-// NAVIGATION MENU TOGGLE
+// CURSOR GLOW
 // ============================================
 
-const hamburger = document.querySelector('.hamburger');
-const navMenu = document.querySelector('.nav-menu');
-const navLinks = document.querySelectorAll('.nav-link');
+const cursorGlow = document.getElementById('cursorGlow');
 
-hamburger.addEventListener('click', () => {
-    navMenu.classList.toggle('active');
-    hamburger.classList.toggle('active');
+document.addEventListener('mousemove', (e) => {
+    cursorGlow.style.left = e.clientX + 'px';
+    cursorGlow.style.top  = e.clientY + 'px';
 });
 
-// Close menu when nav link is clicked
+// ============================================
+// NAVBAR — SCROLL + HAMBURGER
+// ============================================
+
+const navbar   = document.getElementById('navbar');
+const hamburger = document.getElementById('hamburger');
+const navMenu  = document.getElementById('navMenu');
+const navLinks = document.querySelectorAll('.nav-link');
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 60) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+    updateActiveLink();
+    handleScrollTopBtn();
+});
+
+hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('active');
+    navMenu.classList.toggle('open');
+});
+
 navLinks.forEach(link => {
     link.addEventListener('click', () => {
-        navMenu.classList.remove('active');
         hamburger.classList.remove('active');
+        navMenu.classList.remove('open');
     });
 });
 
-// ============================================
-// ACTIVE NAV LINK ON SCROLL
-// ============================================
-
-window.addEventListener('scroll', () => {
+function updateActiveLink() {
     let current = '';
-
-    const sections = document.querySelectorAll('section');
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.clientHeight;
-        if (pageYOffset >= sectionTop - 200) {
+    document.querySelectorAll('section[id]').forEach(section => {
+        if (window.scrollY >= section.offsetTop - 220) {
             current = section.getAttribute('id');
         }
     });
-
     navLinks.forEach(link => {
         link.classList.remove('active');
-        if (link.getAttribute('href').slice(1) === current) {
+        if (link.getAttribute('href') === '#' + current) {
             link.classList.add('active');
         }
     });
-});
-
-// ============================================
-// SMOOTH SCROLL REVEAL ANIMATION
-// ============================================
-
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -100px 0px'
-};
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.style.animation = 'fadeInUp 0.6s ease forwards';
-            observer.unobserve(entry.target);
-        }
-    });
-}, observerOptions);
-
-// Observe all cards and items
-document.querySelectorAll('.project-card, .skill-category, .cert-item, .timeline-item, .info-item, .stat-card').forEach(el => {
-    el.style.animation = 'none';
-    observer.observe(el);
-});
-
-// ============================================
-// TYPING ANIMATION FOR HERO SUBTITLE
-// ============================================
-
-const heroSubtitle = document.querySelector('.hero-subtitle');
-const text = heroSubtitle.textContent;
-heroSubtitle.textContent = '';
-
-let index = 0;
-const speed = 50;
-
-function typeText() {
-    if (index < text.length) {
-        heroSubtitle.textContent += text.charAt(index);
-        index++;
-        setTimeout(typeText, speed);
-    }
 }
 
-// Start typing after a delay
-setTimeout(() => {
-    heroSubtitle.textContent = '';
-    index = 0;
-    typeText();
-}, 500);
-
 // ============================================
-// SKILL TAG CLICK ANIMATION
+// TYPING ANIMATION — HERO SUBTITLE
 // ============================================
 
-const skillTags = document.querySelectorAll('.skill-tag');
-skillTags.forEach(tag => {
-    tag.addEventListener('click', function() {
-        this.style.animation = 'none';
-        setTimeout(() => {
-            this.style.animation = 'pulse 0.5s ease';
-        }, 10);
+const texts = [
+    'Full Stack Developer',
+    'Machine Learning Engineer',
+    'AI Enthusiast',
+    'Problem Solver'
+];
+
+let textIndex = 0;
+let charIndex  = 0;
+let isDeleting = false;
+const subtitleEl = document.getElementById('heroSubtitle');
+
+function typeLoop() {
+    const current = texts[textIndex];
+
+    if (isDeleting) {
+        subtitleEl.textContent = current.substring(0, charIndex - 1);
+        charIndex--;
+    } else {
+        subtitleEl.textContent = current.substring(0, charIndex + 1);
+        charIndex++;
+    }
+
+    if (!isDeleting && charIndex === current.length) {
+        setTimeout(() => { isDeleting = true; typeLoop(); }, 1800);
+        return;
+    }
+
+    if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        textIndex  = (textIndex + 1) % texts.length;
+    }
+
+    const speed = isDeleting ? 50 : 80;
+    setTimeout(typeLoop, speed);
+}
+
+setTimeout(typeLoop, 800);
+
+// ============================================
+// REVEAL ON SCROLL (IntersectionObserver)
+// ============================================
+
+const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+            setTimeout(() => {
+                entry.target.classList.add('visible');
+            }, i * 80);
+            revealObserver.unobserve(entry.target);
+        }
     });
+}, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
 
-    tag.addEventListener('mouseover', function() {
-        this.style.transform = 'scale(1.1)';
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// Also reveal skill/cert/project cards without .reveal
+const generalObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = 'running';
+            generalObserver.unobserve(entry.target);
+        }
     });
+}, { threshold: 0.1 });
 
-    tag.addEventListener('mouseout', function() {
-        this.style.transform = 'scale(1)';
-    });
-});
-
-// ============================================
-// TECH BADGE ANIMATION
-// ============================================
-
-const techBadges = document.querySelectorAll('.tech-badge');
-techBadges.forEach((badge, index) => {
-    badge.style.animation = `fadeInUp 0.6s ease ${index * 0.1}s both`;
-});
-
-// ============================================
-// PROJECT CARD HOVER EFFECT
-// ============================================
-
-const projectCards = document.querySelectorAll('.project-card');
-projectCards.forEach(card => {
-    card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-15px) scale(1.02)';
-    });
-
-    card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0) scale(1)';
-    });
+document.querySelectorAll('.skill-category, .cert-item, .stat-card').forEach(el => {
+    generalObserver.observe(el);
 });
 
 // ============================================
 // STAT COUNTER ANIMATION
 // ============================================
 
-const statCards = document.querySelectorAll('.stat-card h3');
-
-const counterObserverOptions = {
-    threshold: 0.5,
-};
-
-const counterObserver = new IntersectionObserver((entries) => {
+const statObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-        if (entry.isIntersecting && !entry.target.dataset.counted) {
-            animateCounter(entry.target);
-            entry.target.dataset.counted = true;
-            counterObserver.unobserve(entry.target);
+        if (entry.isIntersecting) {
+            const card    = entry.target;
+            const target  = parseInt(card.dataset.count);
+            const valEl   = card.querySelector('.stat-val');
+            let current   = 0;
+            const step    = Math.ceil(target / 40);
+            const timer   = setInterval(() => {
+                current += step;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                valEl.textContent = current;
+            }, 40);
+            statObserver.unobserve(card);
         }
     });
-}, counterObserverOptions);
+}, { threshold: 0.5 });
 
-statCards.forEach(stat => {
-    counterObserver.observe(stat);
-});
-
-function animateCounter(element) {
-    const target = parseInt(element.textContent);
-    let current = 0;
-    const increment = target / 30;
-    const duration = 30;
-    let elapsed = 0;
-
-    const timer = setInterval(() => {
-        elapsed++;
-        current += increment;
-        
-        if (current >= target) {
-            element.textContent = element.textContent.match(/\d+/)[0] + element.textContent.match(/[^0-9]/)[0];
-            clearInterval(timer);
-        } else {
-            const displayValue = Math.floor(current);
-            const unit = element.textContent.match(/[^0-9]/);
-            element.textContent = displayValue + (unit ? unit[0] : '');
-        }
-    }, duration);
-}
+document.querySelectorAll('.stat-card[data-count]').forEach(el => statObserver.observe(el));
 
 // ============================================
 // SCROLL TO TOP BUTTON
 // ============================================
 
-const scrollTopBtn = document.createElement('button');
-scrollTopBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-scrollTopBtn.className = 'scroll-to-top';
-scrollTopBtn.style.cssText = `
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    z-index: 999;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 32px rgba(108, 92, 231, 0.15);
-`;
+const scrollTopBtn = document.getElementById('scrollTop');
 
-document.body.appendChild(scrollTopBtn);
-
-window.addEventListener('scroll', () => {
-    if (window.pageYOffset > 300) {
-        scrollTopBtn.style.display = 'flex';
+function handleScrollTopBtn() {
+    if (window.scrollY > 400) {
+        scrollTopBtn.classList.add('visible');
     } else {
-        scrollTopBtn.style.display = 'none';
+        scrollTopBtn.classList.remove('visible');
     }
-});
+}
 
 scrollTopBtn.addEventListener('click', () => {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ============================================
+// SKILL TAG — RIPPLE EFFECT ON CLICK
+// ============================================
+
+document.querySelectorAll('.skill-tag').forEach(tag => {
+    tag.addEventListener('click', function (e) {
+        const ripple = document.createElement('span');
+        ripple.style.cssText = `
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-anim 0.5s linear;
+            background: rgba(0, 212, 170, 0.25);
+            width: 60px; height: 60px;
+            left: ${e.offsetX - 30}px;
+            top:  ${e.offsetY - 30}px;
+            pointer-events: none;
+        `;
+        this.style.position = 'relative';
+        this.style.overflow = 'hidden';
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 500);
     });
 });
 
-scrollTopBtn.addEventListener('mouseover', function() {
-    this.style.transform = 'translateY(-5px)';
-    this.style.boxShadow = '0 12px 48px rgba(108, 92, 231, 0.25)';
-});
-
-scrollTopBtn.addEventListener('mouseout', function() {
-    this.style.transform = 'translateY(0)';
-    this.style.boxShadow = '0 8px 32px rgba(108, 92, 231, 0.15)';
-});
-
-// ============================================
-// PARALLAX EFFECT ON MOUSE MOVE
-// ============================================
-
-const animatedBox = document.querySelector('.animated-box');
-const hero = document.querySelector('.hero');
-
-hero.addEventListener('mousemove', (e) => {
-    if (!animatedBox) return;
-    
-    const rect = hero.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    const moveX = (x - centerX) * 0.1;
-    const moveY = (y - centerY) * 0.1;
-    
-    animatedBox.style.transform = `translate(${moveX}px, ${moveY}px)`;
-});
-
-// ============================================
-// CONTACT FORM HANDLING (if added in future)
-// ============================================
-
-// Link redirect functionality
-document.addEventListener('click', (e) => {
-    if (e.target.closest('a[target="_blank"]')) {
-        // External links will open in new tab (browser default)
-        console.log('Opening external link:', e.target.href);
+// Add ripple keyframe dynamically
+const rippleStyle = document.createElement('style');
+rippleStyle.textContent = `
+    @keyframes ripple-anim {
+        to { transform: scale(4); opacity: 0; }
     }
+`;
+document.head.appendChild(rippleStyle);
+
+// ============================================
+// PROJECT CARD — TILT EFFECT
+// ============================================
+
+document.querySelectorAll('.project-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+        const rect   = card.getBoundingClientRect();
+        const x      = e.clientX - rect.left;
+        const y      = e.clientY - rect.top;
+        const cx     = rect.width  / 2;
+        const cy     = rect.height / 2;
+        const rotateX = ((y - cy) / cy) * -6;
+        const rotateY = ((x - cx) / cx) *  6;
+        card.style.transform = `translateY(-8px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        card.style.transition = 'transform 0.1s ease';
+    });
+
+    card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+        card.style.transition = 'transform 0.4s ease';
+    });
 });
 
 // ============================================
-// KEYBOARD NAVIGATION
-// ============================================
-
-document.addEventListener('keydown', (e) => {
-    // Close mobile menu on Escape
-    if (e.key === 'Escape' && navMenu.classList.contains('active')) {
-        navMenu.classList.remove('active');
-        hamburger.classList.remove('active');
-    }
-});
-
-// ============================================
-// PERFORMANCE: LAZY LOADING FOR IMAGES
-// ============================================
-
-if ('IntersectionObserver' in window) {
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                if (img.dataset.src) {
-                    img.src = img.dataset.src;
-                    img.removeAttribute('data-src');
-                }
-                imageObserver.unobserve(img);
-            }
-        });
-    });
-
-    document.querySelectorAll('img[data-src]').forEach(img => {
-        imageObserver.observe(img);
-    });
-}
-
-// ============================================
-// DYNAMIC YEAR IN FOOTER
-// ============================================
-
-const currentYear = new Date().getFullYear();
-const footerText = document.querySelector('.footer p');
-if (footerText) {
-    footerText.textContent = `© ${currentYear} Parasaram Hanumanth Srivatsava. All rights reserved.`;
-}
-
-// ============================================
-// ADD FOCUS STATES FOR ACCESSIBILITY
+// NAV LINK — SMOOTH KEYBOARD FOCUS
 // ============================================
 
 navLinks.forEach(link => {
-    link.addEventListener('focus', function() {
-        this.style.outline = '2px solid #6c5ce7';
-        this.style.outlineOffset = '5px';
+    link.addEventListener('focus', () => {
+        link.style.outline = '2px solid rgba(0, 212, 170, 0.5)';
+        link.style.outlineOffset = '4px';
+        link.style.borderRadius = '4px';
     });
-
-    link.addEventListener('blur', function() {
-        this.style.outline = 'none';
+    link.addEventListener('blur', () => {
+        link.style.outline = '';
     });
 });
 
 // ============================================
-// INTERSECTION OBSERVER FOR HEADER
+// CLOSE MOBILE MENU ON OUTSIDE CLICK
 // ============================================
 
-const navbar = document.querySelector('.navbar');
-const heroSection = document.querySelector('.hero');
-
-const headerObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (!entry.isIntersecting) {
-            navbar.style.boxShadow = '0 8px 32px rgba(108, 92, 231, 0.15)';
-        } else {
-            navbar.style.boxShadow = 'none';
-        }
-    });
-}, {
-    threshold: 0.1
+document.addEventListener('click', (e) => {
+    if (!navbar.contains(e.target)) {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('open');
+    }
 });
 
-if (heroSection) {
-    headerObserver.observe(heroSection);
+// ============================================
+// KEYBOARD — ESC TO CLOSE MENU
+// ============================================
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('open');
+    }
+});
+
+// ============================================
+// FOOTER YEAR
+// ============================================
+
+const footerYear = document.getElementById('footerYear');
+if (footerYear) {
+    const yr = new Date().getFullYear();
+    footerYear.textContent = `© ${yr} Parasaram Hanumanth Srivatsava. All rights reserved.`;
 }
 
 // ============================================
-// LOG MESSAGE
+// TECH BADGE STAGGER
 // ============================================
 
-console.log('Portfolio loaded successfully! 🚀');
-console.log('Author: Parasaram Hanumanth Srivatsava');
-console.log('Built with HTML, CSS, and JavaScript');
+document.querySelectorAll('.research-tech .tech-badge, .project-tech .tech-badge').forEach((badge, i) => {
+    badge.style.transitionDelay = `${i * 40}ms`;
+});
+
+// ============================================
+// CONSOLE
+// ============================================
+
+console.log('%c Portfolio Loaded 🚀', 'color:#00d4aa; font-size:16px; font-weight:bold;');
+console.log('%c Parasaram Hanumanth Srivatsava', 'color:#f0b429; font-size:12px;');
