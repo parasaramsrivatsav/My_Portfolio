@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 Parasa Ram Srivatsav
+# 🚀 Parasaram Srivatsav
 
 ### Software Developer | AI/ML Enthusiast | Full Stack Developer | Student Leader
 
